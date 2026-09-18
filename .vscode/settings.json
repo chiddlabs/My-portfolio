@@ -1,6 +1,6 @@
 {
-    "harmonpush.panelUrl": "https://chiddlabs.com:2083/",
-    "harmonpush.cpanelUser": "chiddlab",
+    "harmonpush.ftpServer": "wisdom.chiddlabs.com",
+    "harmonpush.ftpUser": "harmonpush@wisdom.chiddlabs.com",
     "harmonpush.targetFolder": "wisdom.chiddlabs.com",
     "harmonpush.active": true
 }
