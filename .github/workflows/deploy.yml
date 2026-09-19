@@ -1,0 +1,30 @@
+name: HarmonPush Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - master
+
+jobs:
+  web-deploy:
+    name: 🚀 Deploy to cPanel via FTP
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 🚚 Checkout repository
+        uses: actions/checkout@v4
+
+      - name: 📂 Deploy via FTP (lftp)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y lftp
+          lftp -c "
+          set ssl:verify-certificate no
+          set ftp:prefer-epsv false
+          set net:timeout 20
+          set net:max-retries 2
+          set ftp:passive-mode true
+          open -u '${{ secrets.FTP_USERNAME }}','${{ secrets.FTP_PASSWORD }}' ${{ secrets.FTP_SERVER }}
+          mirror -R --verbose --parallel=10 --exclude-glob .git* --exclude-glob node_modules/ --exclude-glob .vscode/ --exclude-glob .github/ --exclude-glob dist/ --exclude-glob *.vsix ./ /
+          "
