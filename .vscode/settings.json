@@ -1,6 +1,7 @@
 {
-    "harmonpush.ftpServer": "wisdom.chiddlabs.com",
-    "harmonpush.ftpUser": "harmonpush@wisdom.chiddlabs.com",
-    "harmonpush.targetFolder": "/",
+    "harmonpush.sshHost": "165.99.164.20",
+    "harmonpush.sshUser": "chiddlab",
+    "harmonpush.sshPort": "2121",
+    "harmonpush.targetFolder": "public_html",
     "harmonpush.active": true
 }

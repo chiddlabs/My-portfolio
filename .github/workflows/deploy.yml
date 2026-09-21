@@ -24,10 +24,6 @@ jobs:
           install -m 700 -d ~/.ssh
           printf '%s\n' "${{ secrets.CPANEL_SSH_KEY }}" > ~/.ssh/cpanel_deploy_key
           chmod 600 ~/.ssh/cpanel_deploy_key
-          
-          # Add the host to known_hosts to prevent the interactive prompt
-          ssh-keyscan -p "${{ secrets.CPANEL_PORT }}" "${{ secrets.CPANEL_HOST }}" >> ~/.ssh/known_hosts
-          chmod 600 ~/.ssh/known_hosts
 
       - name: 📂 Deploy via rsync
         shell: bash
