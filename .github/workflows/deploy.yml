@@ -5,26 +5,40 @@ on:
     branches:
       - main
       - master
+  workflow_dispatch:
 
 jobs:
   web-deploy:
-    name: 🚀 Deploy to cPanel via FTP
+    name: 🚀 Deploy to cPanel via SSH/rsync
     runs-on: ubuntu-latest
+    timeout-minutes: 15
 
     steps:
       - name: 🚚 Checkout repository
         uses: actions/checkout@v4
 
-      - name: 📂 Deploy via FTP (lftp)
+      - name: 🔑 Configure SSH
+        shell: bash
         run: |
-          sudo apt-get update
-          sudo apt-get install -y lftp
-          lftp -c "
-          set ssl:verify-certificate no
-          set ftp:prefer-epsv false
-          set net:timeout 20
-          set net:max-retries 2
-          set ftp:passive-mode true
-          open -u '${{ secrets.FTP_USERNAME }}','${{ secrets.FTP_PASSWORD }}' ${{ secrets.FTP_SERVER }}
-          mirror -R --verbose --parallel=10 --exclude-glob .git* --exclude-glob node_modules/ --exclude-glob .vscode/ --exclude-glob .github/ --exclude-glob dist/ --exclude-glob *.vsix ./ /
-          "
+          set -Eeuo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "${{ secrets.CPANEL_SSH_KEY }}" > ~/.ssh/cpanel_deploy_key
+          chmod 600 ~/.ssh/cpanel_deploy_key
+          
+          # Add the host to known_hosts to prevent the interactive prompt
+          ssh-keyscan -p "${{ secrets.CPANEL_PORT }}" "${{ secrets.CPANEL_HOST }}" >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: 📂 Deploy via rsync
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          rsync -avz --delete \
+            -e "ssh -p ${{ secrets.CPANEL_PORT }} -i ~/.ssh/cpanel_deploy_key -o StrictHostKeyChecking=no" \
+            --exclude '.git' \
+            --exclude 'node_modules' \
+            --exclude '.vscode' \
+            --exclude '.github' \
+            --exclude 'dist' \
+            --exclude '*.vsix' \
+            ./ ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }}:~//public_html/
