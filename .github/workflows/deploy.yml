@@ -22,7 +22,9 @@ jobs:
         run: |
           set -Eeuo pipefail
           install -m 700 -d ~/.ssh
-          printf '%s\n' "${{ secrets.CPANEL_SSH_KEY }}" > ~/.ssh/cpanel_deploy_key
+          cat << 'EOF' > ~/.ssh/cpanel_deploy_key
+${{ secrets.CPANEL_SSH_KEY }}
+EOF
           chmod 600 ~/.ssh/cpanel_deploy_key
 
       - name: 📂 Deploy via rsync
