@@ -1,7 +1,7 @@
 {
     "harmonpush.sshHost": "165.99.164.20",
     "harmonpush.sshUser": "chiddlab",
-    "harmonpush.sshPort": "2121",
+    "harmonpush.sshPort": "22",
     "harmonpush.targetFolder": "wisdom.chiddlabs.com",
     "harmonpush.active": true
 }
