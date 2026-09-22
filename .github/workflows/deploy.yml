@@ -19,12 +19,12 @@ jobs:
 
       - name: 🔑 Configure SSH
         shell: bash
+        env:
+          SSH_KEY: ${{ secrets.CPANEL_SSH_KEY }}
         run: |
           set -Eeuo pipefail
           install -m 700 -d ~/.ssh
-          cat << 'EOF' > ~/.ssh/cpanel_deploy_key
-${{ secrets.CPANEL_SSH_KEY }}
-EOF
+          printf '%s\n' "$SSH_KEY" > ~/.ssh/cpanel_deploy_key
           chmod 600 ~/.ssh/cpanel_deploy_key
 
       - name: 📂 Deploy via rsync
@@ -39,4 +39,4 @@ EOF
             --exclude '.github' \
             --exclude 'dist' \
             --exclude '*.vsix' \
-            ./ ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }}:~//wisdom.chiddlabs.com/
+            ./ ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }}:~//wisdom.chidozie.com/
