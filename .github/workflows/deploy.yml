@@ -39,4 +39,4 @@ jobs:
             --exclude '.github' \
             --exclude 'dist' \
             --exclude '*.vsix' \
-            ./ ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }}:~//wisdom.chidozie.com/
+            ./ ${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }}:~//wisdom.chiddlabs.com/
