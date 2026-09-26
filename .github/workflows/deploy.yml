@@ -1,0 +1,96 @@
+name: HarmonPush Deploy
+
+on:
+  push:
+    branches:
+      - main
+      - master
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: 'harmonpush-My-portfolio'
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: Deploy to cPanel via SSH
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+
+    steps:
+      - name: Configure SSH
+        shell: bash
+        env:
+          SSH_KEY: ${{ secrets.CPANEL_SSH_KEY }}
+          KNOWN_HOSTS: ${{ secrets.CPANEL_KNOWN_HOSTS }}
+        run: |
+          set -Eeuo pipefail
+          install -m 700 -d ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/cpanel_deploy_key
+          chmod 600 ~/.ssh/cpanel_deploy_key
+          echo "$KNOWN_HOSTS" > ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
+
+      - name: Deploy on cPanel
+        shell: bash
+        run: |
+          set -Eeuo pipefail
+          ssh \
+            -p "${{ secrets.CPANEL_PORT }}" \
+            -i ~/.ssh/cpanel_deploy_key \
+            -o BatchMode=yes \
+            -o ConnectTimeout=15 \
+            -o StrictHostKeyChecking=no \
+            -o PubkeyAcceptedKeyTypes=+ssh-rsa \
+            -o HostKeyAlgorithms=+ssh-rsa \
+            "${{ secrets.CPANEL_USER }}@${{ secrets.CPANEL_HOST }}" \
+            'bash -se' <<'DEPLOY_SCRIPT'
+          set -Eeuo pipefail
+
+          REPO_URL="https://github.com/chiddlabs/My-portfolio.git"
+          REPO_PATH="$HOME/repositories/My-portfolio"
+          DEPLOY_PATH="$HOME/wisdom.chiddlabs.com"
+          BRANCH="main"
+
+          on_error() {
+            printf "Deployment failed on line %s.\n" "$1" >&2
+          }
+          trap 'on_error "$LINENO"' ERR
+
+          # Clone or update the repository
+          if [ ! -d "$REPO_PATH/.git" ]; then
+            mkdir -p "$(dirname "$REPO_PATH")"
+            git clone --branch "$BRANCH" "$REPO_URL" "$REPO_PATH" || {
+              BRANCH="master"
+              git clone --branch "$BRANCH" "$REPO_URL" "$REPO_PATH"
+            }
+          fi
+
+          cd "$REPO_PATH"
+          git fetch --prune origin "$BRANCH" || {
+            BRANCH="master"
+            git fetch --prune origin "$BRANCH"
+          }
+          git checkout -B "$BRANCH" "origin/$BRANCH"
+          git reset --hard "origin/$BRANCH"
+
+          # Sync files to the deployment folder
+          mkdir -p "$DEPLOY_PATH"
+
+          rsync -a --no-perms --no-owner --no-group --human-readable \
+            --delete --delete-delay \
+            --exclude ".git/" \
+            --exclude ".github/" \
+            --exclude "node_modules/" \
+            --exclude ".vscode/" \
+            --exclude "dist/" \
+            --exclude "*.vsix" \
+            --exclude ".env" \
+            "$REPO_PATH/" "$DEPLOY_PATH/"
+
+          chmod 755 "$DEPLOY_PATH"
+          echo "Deployment completed successfully."
+          DEPLOY_SCRIPT
